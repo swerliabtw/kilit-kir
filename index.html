@@ -247,16 +247,7 @@
     </div>
   </div>
 
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDz_aIJTEXXFkfDvgf62D4iK6VTZNWbM8U",
-  authDomain: "kilitkir.firebaseapp.com",
-  projectId: "kilitkir",
-  storageBucket: "kilitkir.firebasestorage.app",
-  messagingSenderId: "250815950852",
-  appId: "1:250815950852:web:de08ec1b2839733de18551",
-  measurementId: "G-QPCM2TL7XK"
-};
+  <!-- CHOOSE IDENTITY -->
   <div class="screen" id="screen-name">
     <div class="card">
       <div class="room-chip">
@@ -351,22 +342,16 @@ const firebaseConfig = {
   let unsubscribeDb = null;
   let currentUser = null;
 
-  // -------------------------------------------------------------
-  // ⚠️ 1. ADIM: BURAYI DEĞİŞTİRİN!
-  // Firebase Konsolundan aldığınız "firebaseConfig" nesnesini 
-  // aşağıdaki "MY_CUSTOM_FIREBASE_CONFIG" alanına yapıştırın.
-  // -------------------------------------------------------------
-  const MY_CUSTOM_FIREBASE_CONFIG = null; 
-  /* ÖRNEK KULLANIM:
+  // Sizin sağladığınız Firebase Yapılandırması (Doğrudan entegre edildi!)
   const MY_CUSTOM_FIREBASE_CONFIG = {
-    apiKey: "AIzaSy...",
-    authDomain: "proje-id.firebaseapp.com",
-    projectId: "proje-id",
-    storageBucket: "proje-id.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:12345:web:abcdef"
+    apiKey: "AIzaSyDz_aIJTEXXFkfDvgf62D4iK6VTZNWbM8U",
+    authDomain: "kilitkir.firebaseapp.com",
+    projectId: "kilitkir",
+    storageBucket: "kilitkir.firebasestorage.app",
+    messagingSenderId: "250815950852",
+    appId: "1:250815950852:web:de08ec1b2839733de18551",
+    measurementId: "G-QPCM2TL7XK"
   };
-  */
 
   let firebaseConfig = null;
   let initialAuthToken = null;
@@ -423,8 +408,18 @@ const firebaseConfig = {
       auth = getAuth(app);
       db = getFirestore(app);
 
-      if (initialAuthToken) {
-        await signInWithCustomToken(auth, initialAuthToken);
+      // KRİTİK DÜZELTME: Eğer kendi özel Firebase projenizi kullanıyorsanız, 
+      // sistemin geçici tokenini (initialAuthToken) pas geçip doğrudan Anonim Giriş yapıyoruz.
+      // Bu sayede "auth/custom-token-mismatch" hatası tamamen önlenir.
+      const isCustomConfig = (firebaseConfig === MY_CUSTOM_FIREBASE_CONFIG);
+      
+      if (initialAuthToken && !isCustomConfig) {
+        try {
+          await signInWithCustomToken(auth, initialAuthToken);
+        } catch (tokenErr) {
+          console.warn("Özel anahtar uyuşmadı, anonim girişe geçiliyor...", tokenErr);
+          await signInAnonymously(auth);
+        }
       } else {
         await signInAnonymously(auth);
       }
@@ -460,6 +455,7 @@ const firebaseConfig = {
   }
 
   function getRoomDocRef(code) {
+    // Sizin veritabanınızda direkt 'rooms/{code}' yolunu kullanarak en sade ve güvenli yapıyı kuruyoruz.
     return doc(db, 'rooms', code);
   }
 
@@ -492,6 +488,7 @@ const firebaseConfig = {
       document.getElementById('roomChipCode').textContent = "ODA: " + roomCode;
       document.getElementById('roomChipCode2').textContent = "ODA: " + roomCode;
       
+      // Kullanıcı veritabanındaki oyuncuysa rolünü otomatik eşleştir
       if (roomState.p1 && roomState.p1.uid === currentUser.uid) {
         myRole = 'p1';
         myName = roomState.p1.name;
