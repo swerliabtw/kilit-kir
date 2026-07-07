@@ -126,7 +126,7 @@
       font-family: 'JetBrains Mono', monospace; 
       font-weight: 500; 
       color: var(--brass); 
-      font-size: 11px; 
+      font-size: 12px; 
       word-break: break-all;
       text-align: center;
       line-height: 1.4;
@@ -192,7 +192,7 @@
     }
     .toast.show { opacity: 1; }
     
-    /* Kurulum Hatası Ekranı */
+    /* Setup Error Screen Styling */
     .setup-error {
       font-size: 13px;
       line-height: 1.6;
@@ -239,10 +239,10 @@
   <!-- ROOM JOIN -->
   <div class="screen" id="screen-join">
     <div class="card">
-      <label for="roomInput">Oda Kodu veya Davet Kodu</label>
-      <input type="text" id="roomInput" maxlength="150" placeholder="Örn: ASKIM1 veya kopyaladığınız uzun kod" autocomplete="off" style="font-size: 14px; letter-spacing: 0px;">
+      <label for="roomInput">Oda Kodu</label>
+      <input type="text" id="roomInput" maxlength="20" placeholder="Örn: ASKIM" autocomplete="off" style="text-align: center;">
       <button onclick="joinRoom()">Odaya gir</button>
-      <p class="hint" style="color: var(--brass);"><b>💡 Farklı Cihazlardan Bağlantı:</b> Odayı kuran kişi içerideki uzun "Davet Kodunu" kopyalayıp diğer oyuncuya göndermelidir. Diğer oyuncu buraya o kodu yapıştırarak girmelidir.</p>
+      <p class="hint">İki cihazdan da tamamen aynı oda kodunu yazarak anında bağlanabilirsiniz.</p>
       <p class="error-text" id="joinError"></p>
     </div>
   </div>
@@ -252,7 +252,6 @@
     <div class="card">
       <div class="room-chip">
         <span class="code" id="roomChipCode"></span>
-        <button class="secondary" onclick="copyRoomCode()">Davet Kodunu Kopyala</button>
       </div>
       <label for="nameInput">Adın</label>
       <input type="text" id="nameInput" class="name-input" placeholder="Adını yaz" autocomplete="off">
@@ -276,7 +275,6 @@
     <div class="card">
       <div class="room-chip">
         <span class="code" id="roomChipCode2"></span>
-        <button class="secondary" onclick="copyRoomCode()">Davet Kodunu Kopyala</button>
       </div>
       <label for="secretInput">Kilitlenecek 4 haneli sayın</label>
       <input type="text" id="secretInput" maxlength="4" placeholder="1234" autocomplete="off">
@@ -336,8 +334,6 @@
 
   // Global Değişkenler
   let app, auth, db;
-  let appId = 'kilit-kirma-default-id';
-  let activeAppId = 'kilit-kirma-default-id';
   let roomCode = null;
   let myRole = null;
   let myName = '';
@@ -347,17 +343,17 @@
   let currentUser = null;
 
   // -------------------------------------------------------------
-  // GİTHUB.IO / KENDİ SUNUCUNUZ İÇİN GEREKLİ ADIM:
-  // Firebase projenizi kurup aldığınız yapılandırma nesnesini buraya yapıştırın.
-  // Boş bırakılırsa sistem otomatik olarak geliştirici ortamı değişkenlerini arayacaktır.
+  // ⚠️ 1. ADIM: BURAYI DEĞİŞTİRİN!
+  // Firebase Konsolundan aldığınız "firebaseConfig" nesnesini 
+  // aşağıdaki "MY_CUSTOM_FIREBASE_CONFIG" alanına yapıştırın.
   // -------------------------------------------------------------
   const MY_CUSTOM_FIREBASE_CONFIG = null; 
-  /* Örnek kullanım (null kısmını silip kendi nesnenizi yapıştırın):
+  /* ÖRNEK KULLANIM:
   const MY_CUSTOM_FIREBASE_CONFIG = {
     apiKey: "AIzaSy...",
-    authDomain: "kilit-kirma.firebaseapp.com",
-    projectId: "kilit-kirma",
-    storageBucket: "kilit-kirma.appspot.com",
+    authDomain: "proje-id.firebaseapp.com",
+    projectId: "proje-id",
+    storageBucket: "proje-id.appspot.com",
     messagingSenderId: "123456789",
     appId: "1:12345:web:abcdef"
   };
@@ -366,27 +362,19 @@
   let firebaseConfig = null;
   let initialAuthToken = null;
 
-  // Çevre Değişkenlerini ve Ayarları Çözümleme
   try {
-    if (MY_CUSTOM_FIREBASE_CONFIG) {
+    if (MY_CUSTOM_FIREBASE_CONFIG && MY_CUSTOM_FIREBASE_CONFIG.apiKey !== "BURAYA_API_KEY_GELECEK") {
       firebaseConfig = MY_CUSTOM_FIREBASE_CONFIG;
     } else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
       firebaseConfig = JSON.parse(__firebase_config);
     }
   } catch(e) {
-    console.error("Çevre config okuma hatası:", e);
+    console.error("Config okuma hatası:", e);
   }
 
   if (typeof __initial_auth_token !== 'undefined') {
     initialAuthToken = __initial_auth_token;
   }
-  
-  if (typeof __app_id !== 'undefined' && __app_id) {
-    appId = __app_id;
-  } else {
-    appId = 'kilit-kirma-canvas-shared';
-  }
-  activeAppId = appId;
 
   // Varsayılan Yeni Oda Şablonu
   function defaultRoom() {
@@ -399,24 +387,22 @@
     };
   }
 
-  // Kurulum Eksikliğinde Gösterilecek Hata Ekranı
   function showSetupError() {
     const loadingContent = document.getElementById('loading-content');
     loadingContent.innerHTML = `
       <div class="setup-error">
-        <h3 style="color: var(--danger); margin-bottom: 12px;">Kurulum Eksik!</h3>
-        <p>Uygulamayı <b>github.io</b> (GitHub Pages) gibi harici bir sunucuda çalıştırabilmek için kendi Firebase veritabanınızı bağlamanız gerekir.</p>
-        <p style="margin-top: 8px;"><b>Nasıl Yapılır?</b></p>
-        <ol style="padding-left: 18px; margin: 8px 0;">
-          <li>Google Firebase Console'a girip ücretsiz bir proje oluşturun.</li>
-          <li>Proje içinde bir <b>Web App</b> ve ardından <b>Firestore Database</b> ve <b>Anonymous Auth</b> (Anonim Giriş) özelliklerini aktifleştirin.</li>
-          <li>Size verilen yapılandırma (config) kodunu bu dosyadaki <code>MY_CUSTOM_FIREBASE_CONFIG</code> alanına yapıştırıp GitHub'a yükleyin.</li>
+        <h3 style="color: var(--danger); margin-bottom: 12px; font-weight:700;">Firebase Bağlantısı Bekleniyor</h3>
+        <p>Uygulamayı <b>github.io</b> (GitHub Pages) gibi kendi sunucunuzda çalıştırmak için Firebase veritabanınızı bağlamalısınız.</p>
+        <p style="margin-top: 8px;"><b>Çok Kolay 3 Adım:</b></p>
+        <ol style="padding-left: 18px; margin: 8px 0; font-size:12px;">
+          <li style="margin-bottom:6px;">Google Firebase Console'a girip ücretsiz proje oluşturun.</li>
+          <li style="margin-bottom:6px;"><b>Firestore Database</b>'i ve Authentication menüsünden <b>Anonymous (Anonim)</b> girişi aktif edin.</li>
+          <li>Koda sağ tıklayıp düzenleyin. 250. satırda bulunan <code>MY_CUSTOM_FIREBASE_CONFIG</code> nesnesine kendi Firebase API bilgilerinizi yapıştırıp kaydedin.</li>
         </ol>
       </div>
     `;
   }
 
-  // Firebase ve Auth Başlatma (Kural 3)
   async function initFirebase() {
     if (!firebaseConfig) {
       showSetupError();
@@ -464,25 +450,10 @@
     }, 2500);
   }
 
-  // Akıllı Davet Kodunu Pano kopyalama (İzole ortamlar için en güvenli clipboard yöntemi)
-  window.copyRoomCode = function() {
-    if (!roomCode || !activeAppId) return;
-    const fullInviteCode = `${activeAppId}@${roomCode}`;
-    const dummy = document.createElement("input");
-    document.body.appendChild(dummy);
-    dummy.value = fullInviteCode;
-    dummy.select();
-    document.execCommand("copy");
-    document.body.removeChild(dummy);
-    showToast("Davet kodu panoya kopyalandı!");
-  };
-
-  // Firestore Entegrasyonu (Kural 1 & 2)
   function getRoomDocRef(code) {
-    return doc(db, 'artifacts', activeAppId, 'public', 'data', 'rooms', code);
+    return doc(db, 'rooms', code);
   }
 
-  // Odaya Giriş
   window.joinRoom = async function() {
     if (!currentUser) {
       showToast("Kimlik doğrulama tamamlanmadı, bekleyin.");
@@ -493,28 +464,11 @@
     errEl.textContent = '';
     
     if (!rawInput || rawInput.length < 3) {
-      errEl.textContent = 'Lütfen geçerli bir oda kodu veya davet kodu girin.';
+      errEl.textContent = 'Lütfen en az 3 harfli bir oda kodu girin.';
       return;
     }
 
-    let targetAppId = appId;
-    let targetRoomCode = rawInput.toUpperCase();
-
-    // Akıllı Davet Kodu Çözümleme
-    if (rawInput.includes('@')) {
-      const parts = rawInput.split('@');
-      if (parts.length === 2) {
-        targetAppId = parts[0].trim();
-        targetRoomCode = parts[1].trim().toUpperCase();
-      } else {
-        errEl.textContent = 'Geçersiz davet kodu formatı.';
-        return;
-      }
-    }
-
-    roomCode = targetRoomCode;
-    activeAppId = targetAppId;
-
+    roomCode = rawInput.toUpperCase();
     const docRef = getRoomDocRef(roomCode);
 
     try {
@@ -526,12 +480,9 @@
         roomState = snap.data();
       }
 
-      // Davet Kodunu Arayüzde Göster
-      const displayInviteCode = `${activeAppId}@${roomCode}`;
-      document.getElementById('roomChipCode').textContent = displayInviteCode;
-      document.getElementById('roomChipCode2').textContent = displayInviteCode;
+      document.getElementById('roomChipCode').textContent = "ODA: " + roomCode;
+      document.getElementById('roomChipCode2').textContent = "ODA: " + roomCode;
       
-      // Eğer bu kullanıcı zaten odada kayıtlıysa rolünü otomatik geri kazan
       if (roomState.p1 && roomState.p1.uid === currentUser.uid) {
         myRole = 'p1';
         myName = roomState.p1.name;
@@ -547,11 +498,10 @@
       listenRoomUpdates();
     } catch (e) {
       console.error(e);
-      errEl.textContent = 'Odaya bağlanırken sorun oluştu. Veritabanı izinlerinizi kontrol edin.';
+      errEl.textContent = 'Odaya bağlanırken sorun oluştu. Veritabanı izinlerinizi (Rules) kontrol edin.';
     }
   };
 
-  // Firestore Gerçek Zamanlı Dinleyici Kurulumu
   function listenRoomUpdates() {
     if (isDbListenerActive && unsubscribeDb) {
       unsubscribeDb();
@@ -561,7 +511,6 @@
       if (docSnap.exists()) {
         roomState = docSnap.data();
         
-        // Rol koruma / Otomatik güncelleme
         if (currentUser) {
           if (roomState.p1 && roomState.p1.uid === currentUser.uid) {
             myRole = 'p1';
@@ -571,7 +520,6 @@
             myName = roomState.p2.name;
           }
         }
-        
         onRoomUpdated();
       }
     }, (error) => {
@@ -580,7 +528,6 @@
     isDbListenerActive = true;
   }
 
-  // Koltuk (Oyuncu Rolü) Seçme
   window.claimSlot = async function(role) {
     const errEl = document.getElementById('nameError');
     errEl.textContent = '';
@@ -651,7 +598,6 @@
     }
   }
 
-  // Gizli Sayıyı Kilitleme
   window.submitSecret = async function() {
     if (!myRole) return;
     const val = document.getElementById('secretInput').value.trim();
@@ -691,7 +637,6 @@
     }
   }
 
-  // Veritabanı Güncelleme Tetiklendiğinde Çağrılan Metot
   function onRoomUpdated() {
     const activeScreen = document.querySelector('.screen.active');
     if (!activeScreen) return;
@@ -709,7 +654,6 @@
     }
   }
 
-  // Algoritmalar: Kaç rakam var ve Kaç rakam yerinde?
   function countVar(secret, guess) {
     const secretArr = secret.split('');
     const used = new Array(4).fill(false);
@@ -732,7 +676,6 @@
     return count;
   }
 
-  // Tahmin Gönderme
   window.submitGuess = async function() {
     if (!myRole) return;
     const errEl = document.getElementById('guessError');
@@ -792,7 +735,6 @@
     }
   };
 
-  // Oyun Ekranını Oluşturma
   function renderGame() {
     if (!roomState || !myRole) return;
     const opp = opponentRole();
@@ -861,7 +803,6 @@
     }
   }
 
-  // Yeni Tur / Oyunu Sıfırlama
   window.newRound = async function() {
     const docRef = getRoomDocRef(roomCode);
     try {
@@ -880,7 +821,7 @@
     }
   };
 
-  // Input Sınırlamaları ve Klavye Olayları
+  // Keyboard and Input restrictions
   document.getElementById('roomInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
   document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
   document.getElementById('secretInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitSecret(); });
@@ -888,8 +829,10 @@
   document.getElementById('guessInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
   document.getElementById('guessInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
 
-  // Başlangıç Noktası
-  initFirebase();
+  // Initialize App on Window Load
+  window.onload = function() {
+    initFirebase();
+  }
 </script>
 </body>
 </html>
