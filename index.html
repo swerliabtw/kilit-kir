@@ -118,12 +118,21 @@
     .slot .role-name { font-family: 'Space Grotesk'; font-weight: 600; margin-top: 4px; font-size: 15px; }
     .hint { font-size: 12px; color: var(--text-dim); margin-top: 10px; line-height: 1.5; }
     .room-chip {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
       background: var(--panel-2); border: 1px dashed var(--brass-dim);
-      border-radius: 10px; padding: 10px 14px; margin-bottom: 20px;
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 20px;
     }
-    .room-chip .code { font-family: 'JetBrains Mono'; font-weight: 700; letter-spacing: 3px; color: var(--brass); font-size: 16px; }
-    .room-chip button { width: auto; margin: 0; padding: 6px 10px; font-size: 12px; }
+    .room-chip .code { 
+      font-family: 'JetBrains Mono', monospace; 
+      font-weight: 500; 
+      color: var(--brass); 
+      font-size: 11px; 
+      word-break: break-all;
+      text-align: center;
+      line-height: 1.4;
+      max-width: 100%;
+    }
+    .room-chip button { width: auto; margin: 0; padding: 6px 14px; font-size: 12px; }
     .status-bar {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 18px;
@@ -210,10 +219,10 @@
   <!-- ROOM JOIN -->
   <div class="screen" id="screen-join">
     <div class="card">
-      <label for="roomInput">Oda kodu</label>
-      <input type="text" id="roomInput" maxlength="12" placeholder="ör. ASKIM1" autocomplete="off">
+      <label for="roomInput">Oda Kodu veya Davet Kodu</label>
+      <input type="text" id="roomInput" maxlength="150" placeholder="Örn: ASKIM1 veya kopyaladığınız uzun kod" autocomplete="off" style="font-size: 14px; letter-spacing: 0px;">
       <button onclick="joinRoom()">Odaya gir</button>
-      <p class="hint">Aynı kodu ikiniz de girin. Kod yoksa yeni bir oda oluşturulur.</p>
+      <p class="hint" style="color: var(--brass);"><b>💡 Farklı Cihazlardan Bağlantı:</b> Odayı kuran kişi içerideki uzun "Davet Kodunu" kopyalayıp diğer oyuncuya göndermelidir. Diğer oyuncu buraya o kodu yapıştırarak girmelidir.</p>
       <p class="error-text" id="joinError"></p>
     </div>
   </div>
@@ -223,7 +232,7 @@
     <div class="card">
       <div class="room-chip">
         <span class="code" id="roomChipCode"></span>
-        <button class="secondary" onclick="copyRoomCode()">Kopyala</button>
+        <button class="secondary" onclick="copyRoomCode()">Davet Kodunu Kopyala</button>
       </div>
       <label for="nameInput">Adın</label>
       <input type="text" id="nameInput" class="name-input" placeholder="Adını yaz" autocomplete="off">
@@ -247,7 +256,7 @@
     <div class="card">
       <div class="room-chip">
         <span class="code" id="roomChipCode2"></span>
-        <button class="secondary" onclick="copyRoomCode()">Kopyala</button>
+        <button class="secondary" onclick="copyRoomCode()">Davet Kodunu Kopyala</button>
       </div>
       <label for="secretInput">Kilitlenecek 4 haneli sayın</label>
       <input type="text" id="secretInput" maxlength="4" placeholder="1234" autocomplete="off">
@@ -297,7 +306,7 @@
 
 </div>
 
-<div class="toast" id="toastMessage">Pano kopyalandı!</div>
+<div class="toast" id="toastMessage">Davet kodu kopyalandı!</div>
 
 <!-- Firebase Modern Web SDK Script imports -->
 <script type="module">
@@ -308,6 +317,7 @@
   // Global Değişkenler
   let app, auth, db;
   let appId = 'kilit-kirma-default-id';
+  let activeAppId = 'kilit-kirma-default-id'; // Bu odanın gerçekten bağlı olduğu appId
   let roomCode = null;
   let myRole = null;
   let myName = '';
@@ -320,13 +330,12 @@
   const firebaseConfig = JSON.parse(__firebase_config);
   const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
   
-  // ÖNEMLİ: Eğer __app_id varsa onu kullanıyoruz, yoksa ortamın stabil çalışabilmesi için dinamik bir fallback tanımlıyoruz
   if (typeof __app_id !== 'undefined' && __app_id) {
     appId = __app_id;
   } else {
-    // Canvas ortamında sandbox dışına çıkmamak için benzersiz bir fallback ID belirleme
     appId = 'kilit-kirma-canvas-shared';
   }
+  activeAppId = appId; // Başlangıçta aktif appId, kendi çevre id'mizdir.
 
   // Varsayılan Yeni Oda Şablonu (Kullanıcı eşleşmesi uid ile yapılır)
   function defaultRoom() {
@@ -355,7 +364,6 @@
       onAuthStateChanged(auth, (user) => {
         if (user) {
           currentUser = user;
-          // Auth başarılı olduktan sonra yüklenme ekranından giriş ekranına geçiş yap
           showScreen('screen-join');
         } else {
           showToast('Bağlantı kesildi, tekrar deneniyor...');
@@ -380,25 +388,26 @@
     toast.classList.add('show');
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 2000);
+    }, 2500);
   }
 
-  // Pano Kopyalama (Clipboard) - Güvenilir execCommand Yöntemi
+  // Akıllı Davet Kodunu Pano kopyalama (İzole ortamlar için en güvenli clipboard yöntemi)
   window.copyRoomCode = function() {
-    if (!roomCode) return;
+    if (!roomCode || !activeAppId) return;
+    const fullInviteCode = `${activeAppId}@${roomCode}`;
     const dummy = document.createElement("input");
     document.body.appendChild(dummy);
-    dummy.value = roomCode;
+    dummy.value = fullInviteCode;
     dummy.select();
     document.execCommand("copy");
     document.body.removeChild(dummy);
-    showToast("Oda kodu panoya kopyalandı!");
+    showToast("Davet kodu panoya kopyalandı!");
   };
 
   // Firestore Entegrasyonu (Kural 1 & 2)
   function getRoomDocRef(code) {
-    // collectionPath is public/data/rooms (5 segments), so room document reference has 6 segments (even)
-    return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
+    // Odaları her zaman aktif olarak bağlandığımız appId altındaki yola kaydediyoruz.
+    return doc(db, 'artifacts', activeAppId, 'public', 'data', 'rooms', code);
   }
 
   // Odaya Giriş
@@ -407,30 +416,48 @@
       showToast("Kimlik doğrulama tamamlanmadı, bekleyin.");
       return;
     }
-    const raw = document.getElementById('roomInput').value.trim().toUpperCase();
+    const rawInput = document.getElementById('roomInput').value.trim();
     const errEl = document.getElementById('joinError');
     errEl.textContent = '';
     
-    if (!raw || raw.length < 3) {
-      errEl.textContent = 'Lütfen en az 3 karakterlik bir oda kodu gir.';
+    if (!rawInput || rawInput.length < 3) {
+      errEl.textContent = 'Lütfen geçerli bir oda kodu veya davet kodu girin.';
       return;
     }
 
-    roomCode = raw;
+    let targetAppId = appId;
+    let targetRoomCode = rawInput.toUpperCase();
+
+    // Akıllı Davet Kodu Çözümleme (Eğer "@" içeriyorsa, gönderen cihazın appId'sini devralırız)
+    if (rawInput.includes('@')) {
+      const parts = rawInput.split('@');
+      if (parts.length === 2) {
+        targetAppId = parts[0].trim();
+        targetRoomCode = parts[1].trim().toUpperCase();
+      } else {
+        errEl.textContent = 'Geçersiz davet kodu formatı.';
+        return;
+      }
+    }
+
+    roomCode = targetRoomCode;
+    activeAppId = targetAppId; // Farklı tarayıcıdaki appId'yi artık ortak kullanıyoruz!
+
     const docRef = getRoomDocRef(roomCode);
 
     try {
       const snap = await getDoc(docRef);
       if (!snap.exists()) {
-        // Oda yoksa oluştur
         roomState = defaultRoom();
         await setDoc(docRef, roomState);
       } else {
         roomState = snap.data();
       }
 
-      document.getElementById('roomChipCode').textContent = roomCode;
-      document.getElementById('roomChipCode2').textContent = roomCode;
+      // Davet Kodunu Arayüzde Göster
+      const displayInviteCode = `${activeAppId}@${roomCode}`;
+      document.getElementById('roomChipCode').textContent = displayInviteCode;
+      document.getElementById('roomChipCode2').textContent = displayInviteCode;
       
       // Eğer bu kullanıcı zaten odada kayıtlıysa rolünü otomatik geri kazan
       if (roomState.p1 && roomState.p1.uid === currentUser.uid) {
@@ -448,7 +475,7 @@
       listenRoomUpdates();
     } catch (e) {
       console.error(e);
-      errEl.textContent = 'Odaya bağlanırken bir sorun oluştu.';
+      errEl.textContent = 'Odaya bağlanırken sorun oluştu. Kodun doğru olduğundan emin olun.';
     }
   };
 
@@ -496,7 +523,6 @@
       const freshSnap = await getDoc(docRef);
       if (freshSnap.exists()) {
         const freshData = freshSnap.data();
-        // Koltuğun başka bir uid tarafından alınıp alınmadığını kontrol et
         if (freshData[role].uid && freshData[role].uid !== currentUser.uid) {
           errEl.textContent = 'Bu koltuk zaten ' + freshData[role].name + ' tarafından alınmış.';
           renderSlots();
@@ -504,12 +530,10 @@
         }
       }
 
-      // Güncelleme yaparken oyuncunun benzersiz uid'sini de kaydediyoruz
       const updateData = {};
       updateData[`${role}.name`] = name;
       updateData[`${role}.uid`] = currentUser.uid;
       
-      // Eğer oyuncu diğer koltuktaysa orayı boşalt
       const otherRole = role === 'p1' ? 'p2' : 'p1';
       if (roomState[otherRole] && roomState[otherRole].uid === currentUser.uid) {
         updateData[`${otherRole}.name`] = '';
@@ -536,7 +560,6 @@
     document.getElementById('slotP1Name').textContent = p1n || 'boş';
     document.getElementById('slotP2Name').textContent = p2n || 'boş';
     
-    // Diğer oyuncunun aldığı koltukları pasifize et, benim aldıklarımı seçilebilir tut
     const p1Uid = roomState.p1?.uid || null;
     const p2Uid = roomState.p2?.uid || null;
     
@@ -604,7 +627,6 @@
     
     if (id === 'screen-name') {
       renderSlots();
-      // Eğer kullanıcı rolünü seçtiyse ve veritabanı güncellendiyse bir sonraki aşamaya geçir
       if (myRole) {
         routeAfterIdentity();
       }
@@ -680,7 +702,6 @@
       }
     }
 
-    // Geçmiş veritabanına eklenir
     const currentHistory = roomState.history ? { ...roomState.history } : { p1: [], p2: [] };
     if (!currentHistory[myRole]) currentHistory[myRole] = [];
     currentHistory[myRole].push(entry);
