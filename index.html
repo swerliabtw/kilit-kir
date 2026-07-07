@@ -191,6 +191,26 @@
       transition: opacity 0.3s ease;
     }
     .toast.show { opacity: 1; }
+    
+    /* Kurulum Hatası Ekranı */
+    .setup-error {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      text-align: left;
+    }
+    .setup-error code {
+      display: block;
+      background: #111;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #ff7b72;
+      margin: 10px 0;
+      font-size: 11px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -209,7 +229,7 @@
   <!-- LOADING CONNECTION -->
   <div class="screen active" id="screen-loading">
     <div class="card">
-      <div class="center-wait">
+      <div class="center-wait" id="loading-content">
         <span class="spinner"></span>
         <p style="margin-top:14px;">Bulut sunucusuna bağlanılıyor...</p>
       </div>
@@ -317,7 +337,7 @@
   // Global Değişkenler
   let app, auth, db;
   let appId = 'kilit-kirma-default-id';
-  let activeAppId = 'kilit-kirma-default-id'; // Bu odanın gerçekten bağlı olduğu appId
+  let activeAppId = 'kilit-kirma-default-id';
   let roomCode = null;
   let myRole = null;
   let myName = '';
@@ -326,18 +346,49 @@
   let unsubscribeDb = null;
   let currentUser = null;
 
-  // Çevre Değişkenlerini Çekme ve appId Belirleme
-  const firebaseConfig = JSON.parse(__firebase_config);
-  const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+  // -------------------------------------------------------------
+  // GİTHUB.IO / KENDİ SUNUCUNUZ İÇİN GEREKLİ ADIM:
+  // Firebase projenizi kurup aldığınız yapılandırma nesnesini buraya yapıştırın.
+  // Boş bırakılırsa sistem otomatik olarak geliştirici ortamı değişkenlerini arayacaktır.
+  // -------------------------------------------------------------
+  const MY_CUSTOM_FIREBASE_CONFIG = null; 
+  /* Örnek kullanım (null kısmını silip kendi nesnenizi yapıştırın):
+  const MY_CUSTOM_FIREBASE_CONFIG = {
+    apiKey: "AIzaSy...",
+    authDomain: "kilit-kirma.firebaseapp.com",
+    projectId: "kilit-kirma",
+    storageBucket: "kilit-kirma.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:12345:web:abcdef"
+  };
+  */
+
+  let firebaseConfig = null;
+  let initialAuthToken = null;
+
+  // Çevre Değişkenlerini ve Ayarları Çözümleme
+  try {
+    if (MY_CUSTOM_FIREBASE_CONFIG) {
+      firebaseConfig = MY_CUSTOM_FIREBASE_CONFIG;
+    } else if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+      firebaseConfig = JSON.parse(__firebase_config);
+    }
+  } catch(e) {
+    console.error("Çevre config okuma hatası:", e);
+  }
+
+  if (typeof __initial_auth_token !== 'undefined') {
+    initialAuthToken = __initial_auth_token;
+  }
   
   if (typeof __app_id !== 'undefined' && __app_id) {
     appId = __app_id;
   } else {
     appId = 'kilit-kirma-canvas-shared';
   }
-  activeAppId = appId; // Başlangıçta aktif appId, kendi çevre id'mizdir.
+  activeAppId = appId;
 
-  // Varsayılan Yeni Oda Şablonu (Kullanıcı eşleşmesi uid ile yapılır)
+  // Varsayılan Yeni Oda Şablonu
   function defaultRoom() {
     return {
       p1: { name: '', secret: null, uid: null },
@@ -348,8 +399,30 @@
     };
   }
 
+  // Kurulum Eksikliğinde Gösterilecek Hata Ekranı
+  function showSetupError() {
+    const loadingContent = document.getElementById('loading-content');
+    loadingContent.innerHTML = `
+      <div class="setup-error">
+        <h3 style="color: var(--danger); margin-bottom: 12px;">Kurulum Eksik!</h3>
+        <p>Uygulamayı <b>github.io</b> (GitHub Pages) gibi harici bir sunucuda çalıştırabilmek için kendi Firebase veritabanınızı bağlamanız gerekir.</p>
+        <p style="margin-top: 8px;"><b>Nasıl Yapılır?</b></p>
+        <ol style="padding-left: 18px; margin: 8px 0;">
+          <li>Google Firebase Console'a girip ücretsiz bir proje oluşturun.</li>
+          <li>Proje içinde bir <b>Web App</b> ve ardından <b>Firestore Database</b> ve <b>Anonymous Auth</b> (Anonim Giriş) özelliklerini aktifleştirin.</li>
+          <li>Size verilen yapılandırma (config) kodunu bu dosyadaki <code>MY_CUSTOM_FIREBASE_CONFIG</code> alanına yapıştırıp GitHub'a yükleyin.</li>
+        </ol>
+      </div>
+    `;
+  }
+
   // Firebase ve Auth Başlatma (Kural 3)
   async function initFirebase() {
+    if (!firebaseConfig) {
+      showSetupError();
+      return;
+    }
+
     try {
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
@@ -371,7 +444,7 @@
       });
     } catch (error) {
       console.error("Firebase başlatılamadı:", error);
-      document.querySelector('#screen-loading p').textContent = "Bağlantı hatası oluştu. Lütfen sayfayı yenileyin.";
+      document.querySelector('#screen-loading p').textContent = "Bağlantı kurulamadı. Firebase ayarlarınızı ve internetinizi kontrol edin.";
     }
   }
 
@@ -406,7 +479,6 @@
 
   // Firestore Entegrasyonu (Kural 1 & 2)
   function getRoomDocRef(code) {
-    // Odaları her zaman aktif olarak bağlandığımız appId altındaki yola kaydediyoruz.
     return doc(db, 'artifacts', activeAppId, 'public', 'data', 'rooms', code);
   }
 
@@ -428,7 +500,7 @@
     let targetAppId = appId;
     let targetRoomCode = rawInput.toUpperCase();
 
-    // Akıllı Davet Kodu Çözümleme (Eğer "@" içeriyorsa, gönderen cihazın appId'sini devralırız)
+    // Akıllı Davet Kodu Çözümleme
     if (rawInput.includes('@')) {
       const parts = rawInput.split('@');
       if (parts.length === 2) {
@@ -441,7 +513,7 @@
     }
 
     roomCode = targetRoomCode;
-    activeAppId = targetAppId; // Farklı tarayıcıdaki appId'yi artık ortak kullanıyoruz!
+    activeAppId = targetAppId;
 
     const docRef = getRoomDocRef(roomCode);
 
@@ -475,7 +547,7 @@
       listenRoomUpdates();
     } catch (e) {
       console.error(e);
-      errEl.textContent = 'Odaya bağlanırken sorun oluştu. Kodun doğru olduğundan emin olun.';
+      errEl.textContent = 'Odaya bağlanırken sorun oluştu. Veritabanı izinlerinizi kontrol edin.';
     }
   };
 
