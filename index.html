@@ -1,180 +1,188 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kilit Kırma</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#1B1D21;
-    --panel:#24272C;
-    --panel-2:#2C3036;
-    --line:#383C42;
-    --brass:#C9A24D;
-    --brass-dim:#8C7534;
-    --teal:#4C8A7D;
-    --text:#ECE8DF;
-    --text-dim:#9C9A93;
-    --success:#7CB690;
-    --danger:#C1665C;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    padding:32px 16px 80px;
-  }
-  .wrap{width:100%;max-width:460px;}
-  h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;}
-  .brand{
-    display:flex;align-items:center;gap:12px;justify-content:center;
-    margin-bottom:6px;
-  }
-  .brand h1{font-size:26px;font-weight:700;letter-spacing:0.3px;}
-  .tagline{
-    text-align:center;color:var(--text-dim);font-size:13px;
-    margin-bottom:32px;
-  }
-  .card{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:24px;
-    margin-bottom:16px;
-  }
-  .screen{display:none;}
-  .screen.active{display:block;}
-  label{
-    display:block;font-size:12px;color:var(--text-dim);
-    text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;
-  }
-  input[type=text]{
-    width:100%;
-    background:var(--panel-2);
-    border:1px solid var(--line);
-    border-radius:8px;
-    color:var(--text);
-    font-family:'JetBrains Mono',monospace;
-    font-size:20px;
-    letter-spacing:4px;
-    padding:12px 14px;
-    text-align:center;
-    outline:none;
-  }
-  input[type=text]:focus{border-color:var(--brass);}
-  input[type=text].name-input{
-    font-family:'Inter',sans-serif;
-    letter-spacing:0;
-    font-size:15px;
-    text-align:left;
-  }
-  button{
-    font-family:'Space Grotesk',sans-serif;
-    font-weight:600;
-    font-size:14px;
-    border-radius:8px;
-    border:1px solid var(--brass-dim);
-    background:var(--brass);
-    color:#26210F;
-    padding:12px 18px;
-    cursor:pointer;
-    width:100%;
-    margin-top:14px;
-    transition:transform .1s ease, opacity .15s ease;
-  }
-  button:hover{opacity:0.92;}
-  button:active{transform:scale(0.98);}
-  button.secondary{
-    background:transparent;
-    color:var(--text);
-    border:1px solid var(--line);
-  }
-  button:disabled{
-    opacity:0.4;
-    cursor:not-allowed;
-  }
-  .slot-row{
-    display:flex;gap:10px;margin-top:6px;
-  }
-  .slot{
-    flex:1;
-    background:var(--panel-2);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:14px 10px;
-    text-align:center;
-    cursor:pointer;
-  }
-  .slot.taken{cursor:default;opacity:0.7;}
-  .slot .role-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;}
-  .slot .role-name{font-family:'Space Grotesk';font-weight:600;margin-top:4px;font-size:15px;}
-  .hint{font-size:12px;color:var(--text-dim);margin-top:10px;line-height:1.5;}
-  .room-chip{
-    display:flex;align-items:center;justify-content:center;gap:10px;
-    background:var(--panel-2);border:1px dashed var(--brass-dim);
-    border-radius:10px;padding:10px 14px;margin-bottom:20px;
-  }
-  .room-chip .code{font-family:'JetBrains Mono';font-weight:700;letter-spacing:3px;color:var(--brass);font-size:16px;}
-  .room-chip button{width:auto;margin:0;padding:6px 10px;font-size:12px;}
-  .status-bar{
-    display:flex;justify-content:space-between;align-items:center;
-    margin-bottom:18px;
-  }
-  .player-pill{
-    display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);
-  }
-  .player-pill.me{color:var(--text);font-weight:600;}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--line);}
-  .dot.ready{background:var(--success);}
-  .mode-banner{
-    background:var(--panel-2);
-    border-left:3px solid var(--brass);
-    border-radius:6px;
-    padding:12px 14px;
-    font-size:13px;
-    color:var(--text);
-    margin-bottom:18px;
-    line-height:1.5;
-  }
-  .mode-banner b{color:var(--brass);}
-  .guess-row{display:flex;gap:10px;align-items:flex-end;}
-  .guess-row input{flex:1;}
-  .guess-row button{width:auto;margin-top:0;white-space:nowrap;padding:12px 16px;}
-  table.history{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px;}
-  table.history th{
-    text-align:left;font-size:11px;color:var(--text-dim);
-    text-transform:uppercase;letter-spacing:0.5px;
-    padding-bottom:8px;border-bottom:1px solid var(--line);
-  }
-  table.history td{
-    padding:9px 4px;border-bottom:1px solid var(--line);
-    font-family:'JetBrains Mono';
-  }
-  table.history td.count{font-weight:700;color:var(--brass);font-family:'Space Grotesk';}
-  .empty-history{color:var(--text-dim);font-size:13px;padding:14px 0;text-align:center;}
-  .win-banner{
-    text-align:center;padding:22px 10px;
-  }
-  .win-banner h2{font-size:20px;color:var(--brass);margin-bottom:6px;}
-  .win-banner p{color:var(--text-dim);font-size:13px;margin:0;}
-  .lock-icon{flex-shrink:0;}
-  .spinner{
-    width:16px;height:16px;border-radius:50%;
-    border:2px solid var(--line);border-top-color:var(--brass);
-    animation:spin 0.8s linear infinite;display:inline-block;vertical-align:middle;
-  }
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .error-text{color:var(--danger);font-size:13px;margin-top:8px;min-height:16px;}
-  .center-wait{text-align:center;padding:30px 0;color:var(--text-dim);font-size:14px;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kilit Kırma - Canlı Çok Oyunculu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1B1D21;
+      --panel: #24272C;
+      --panel-2: #2C3036;
+      --line: #383C42;
+      --brass: #C9A24D;
+      --brass-dim: #8C7534;
+      --teal: #4C8A7D;
+      --text: #ECE8DF;
+      --text-dim: #9C9A93;
+      --success: #7CB690;
+      --danger: #C1665C;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px 80px;
+    }
+    .wrap { width: 100%; max-width: 460px; }
+    h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; margin: 0; }
+    .brand {
+      display: flex; align-items: center; gap: 12px; justify-content: center;
+      margin-bottom: 6px;
+    }
+    .brand h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.3px; }
+    .tagline {
+      text-align: center; color: var(--text-dim); font-size: 13px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    label {
+      display: block; font-size: 12px; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;
+    }
+    input[type=text] {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 4px;
+      padding: 12px 14px;
+      text-align: center;
+      outline: none;
+    }
+    input[type=text]:focus { border-color: var(--brass); }
+    input[type=text].name-input {
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0;
+      font-size: 15px;
+      text-align: left;
+    }
+    button {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--brass-dim);
+      background: var(--brass);
+      color: #26210F;
+      padding: 12px 18px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 14px;
+      transition: transform .1s ease, opacity .15s ease;
+    }
+    button:hover { opacity: 0.92; }
+    button:active { transform: scale(0.98); }
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .slot-row {
+      display: flex; gap: 10px; margin-top: 6px;
+    }
+    .slot {
+      flex: 1;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .slot.taken { cursor: default; opacity: 0.7; }
+    .slot .role-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+    .slot .role-name { font-family: 'Space Grotesk'; font-weight: 600; margin-top: 4px; font-size: 15px; }
+    .hint { font-size: 12px; color: var(--text-dim); margin-top: 10px; line-height: 1.5; }
+    .room-chip {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: var(--panel-2); border: 1px dashed var(--brass-dim);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 20px;
+    }
+    .room-chip .code { font-family: 'JetBrains Mono'; font-weight: 700; letter-spacing: 3px; color: var(--brass); font-size: 16px; }
+    .room-chip button { width: auto; margin: 0; padding: 6px 10px; font-size: 12px; }
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px;
+    }
+    .player-pill {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim);
+    }
+    .player-pill.me { color: var(--text); font-weight: 600; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+    .dot.ready { background: var(--success); }
+    .mode-banner {
+      background: var(--panel-2);
+      border-left: 3px solid var(--brass);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+    .mode-banner b { color: var(--brass); }
+    .guess-row { display: flex; gap: 10px; align-items: flex-end; }
+    .guess-row input { flex: 1; }
+    .guess-row button { width: auto; margin-top: 0; white-space: nowrap; padding: 12px 16px; }
+    table.history { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 14px; }
+    table.history th {
+      text-align: left; font-size: 11px; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--line);
+    }
+    table.history td {
+      padding: 9px 4px; border-bottom: 1px solid var(--line);
+      font-family: 'JetBrains Mono';
+    }
+    table.history td.count { font-weight: 700; color: var(--brass); font-family: 'Space Grotesk'; }
+    .empty-history { color: var(--text-dim); font-size: 13px; padding: 14px 0; text-align: center; }
+    .win-banner {
+      text-align: center; padding: 22px 10px;
+    }
+    .win-banner h2 { font-size: 20px; color: var(--brass); margin-bottom: 6px; }
+    .win-banner p { color: var(--text-dim); font-size: 13px; margin: 0; }
+    .lock-icon { flex-shrink: 0; }
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid var(--line); border-top-color: var(--brass);
+      animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-text { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 16px; }
+    .center-wait { text-align: center; padding: 30px 0; color: var(--text-dim); font-size: 14px; }
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--panel-2); border: 1px solid var(--brass); color: var(--text);
+      padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none; opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .toast.show { opacity: 1; }
+  </style>
 </head>
 <body>
 <div class="wrap">
@@ -189,13 +197,23 @@
   </div>
   <p class="tagline">Sayını kilitle, sevgilininkini kır.</p>
 
+  <!-- LOADING CONNECTION -->
+  <div class="screen active" id="screen-loading">
+    <div class="card">
+      <div class="center-wait">
+        <span class="spinner"></span>
+        <p style="margin-top:14px;">Bulut sunucusuna bağlanılıyor...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ROOM JOIN -->
-  <div class="screen active" id="screen-join">
+  <div class="screen" id="screen-join">
     <div class="card">
       <label for="roomInput">Oda kodu</label>
-      <input type="text" id="roomInput" maxlength="8" placeholder="ör. ASKIM1" autocomplete="off">
+      <input type="text" id="roomInput" maxlength="12" placeholder="ör. ASKIM1" autocomplete="off">
       <button onclick="joinRoom()">Odaya gir</button>
-      <p class="hint">Aynı kodu ikiniz de girin. Kod yoksa otomatik oluşturulur.</p>
+      <p class="hint">Aynı kodu ikiniz de girin. Kod yoksa yeni bir oda oluşturulur.</p>
       <p class="error-text" id="joinError"></p>
     </div>
   </div>
@@ -279,285 +297,506 @@
 
 </div>
 
-<script>
-let roomCode = null;
-let myRole = null;
-let myName = '';
-let roomState = null;
-let pollTimer = null;
+<div class="toast" id="toastMessage">Pano kopyalandı!</div>
 
-function storageKey(code){ return 'kilitkirma:' + code; }
+<!-- Firebase Modern Web SDK Script imports -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-function defaultRoom(){
-  return {
-    p1: { name: '', secret: null },
-    p2: { name: '', secret: null },
-    history: { p1: [], p2: [] },
-    foundAll: { p1: false, p2: false },
-    winner: null
+  // Global Değişkenler
+  let app, auth, db;
+  let appId = 'kilit-kirma-default-id';
+  let roomCode = null;
+  let myRole = null;
+  let myName = '';
+  let roomState = null;
+  let isDbListenerActive = false;
+  let unsubscribeDb = null;
+  let currentUser = null;
+
+  // Çevre Değişkenlerini Çekme ve appId Belirleme
+  const firebaseConfig = JSON.parse(__firebase_config);
+  const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+  
+  // ÖNEMLİ: Eğer __app_id varsa onu kullanıyoruz, yoksa ortamın stabil çalışabilmesi için dinamik bir fallback tanımlıyoruz
+  if (typeof __app_id !== 'undefined' && __app_id) {
+    appId = __app_id;
+  } else {
+    // Canvas ortamında sandbox dışına çıkmamak için benzersiz bir fallback ID belirleme
+    appId = 'kilit-kirma-canvas-shared';
+  }
+
+  // Varsayılan Yeni Oda Şablonu (Kullanıcı eşleşmesi uid ile yapılır)
+  function defaultRoom() {
+    return {
+      p1: { name: '', secret: null, uid: null },
+      p2: { name: '', secret: null, uid: null },
+      history: { p1: [], p2: [] },
+      foundAll: { p1: false, p2: false },
+      winner: null
+    };
+  }
+
+  // Firebase ve Auth Başlatma (Kural 3)
+  async function initFirebase() {
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+
+      if (initialAuthToken) {
+        await signInWithCustomToken(auth, initialAuthToken);
+      } else {
+        await signInAnonymously(auth);
+      }
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          currentUser = user;
+          // Auth başarılı olduktan sonra yüklenme ekranından giriş ekranına geçiş yap
+          showScreen('screen-join');
+        } else {
+          showToast('Bağlantı kesildi, tekrar deneniyor...');
+        }
+      });
+    } catch (error) {
+      console.error("Firebase başlatılamadı:", error);
+      document.querySelector('#screen-loading p').textContent = "Bağlantı hatası oluştu. Lütfen sayfayı yenileyin.";
+    }
+  }
+
+  // Ekran Gösterme Yardımcısı
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // Toast Mesajı Gösterme
+  function showToast(msg) {
+    const toast = document.getElementById('toastMessage');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2000);
+  }
+
+  // Pano Kopyalama (Clipboard) - Güvenilir execCommand Yöntemi
+  window.copyRoomCode = function() {
+    if (!roomCode) return;
+    const dummy = document.createElement("input");
+    document.body.appendChild(dummy);
+    dummy.value = roomCode;
+    dummy.select();
+    document.execCommand("copy");
+    document.body.removeChild(dummy);
+    showToast("Oda kodu panoya kopyalandı!");
   };
-}
 
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-async function joinRoom(){
-  const raw = document.getElementById('roomInput').value.trim().toUpperCase();
-  const errEl = document.getElementById('joinError');
-  errEl.textContent = '';
-  if(!raw || raw.length < 3){
-    errEl.textContent = 'Lütfen en az 3 karakterlik bir oda kodu gir.';
-    return;
+  // Firestore Entegrasyonu (Kural 1 & 2)
+  function getRoomDocRef(code) {
+    // collectionPath is public/data/rooms (5 segments), so room document reference has 6 segments (even)
+    return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
   }
-  roomCode = raw;
-  try{
-    const res = await window.storage.get(storageKey(roomCode), true);
-    roomState = res ? JSON.parse(res.value) : defaultRoom();
-  }catch(e){
-    roomState = defaultRoom();
+
+  // Odaya Giriş
+  window.joinRoom = async function() {
+    if (!currentUser) {
+      showToast("Kimlik doğrulama tamamlanmadı, bekleyin.");
+      return;
+    }
+    const raw = document.getElementById('roomInput').value.trim().toUpperCase();
+    const errEl = document.getElementById('joinError');
+    errEl.textContent = '';
+    
+    if (!raw || raw.length < 3) {
+      errEl.textContent = 'Lütfen en az 3 karakterlik bir oda kodu gir.';
+      return;
+    }
+
+    roomCode = raw;
+    const docRef = getRoomDocRef(roomCode);
+
+    try {
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) {
+        // Oda yoksa oluştur
+        roomState = defaultRoom();
+        await setDoc(docRef, roomState);
+      } else {
+        roomState = snap.data();
+      }
+
+      document.getElementById('roomChipCode').textContent = roomCode;
+      document.getElementById('roomChipCode2').textContent = roomCode;
+      
+      // Eğer bu kullanıcı zaten odada kayıtlıysa rolünü otomatik geri kazan
+      if (roomState.p1 && roomState.p1.uid === currentUser.uid) {
+        myRole = 'p1';
+        myName = roomState.p1.name;
+      } else if (roomState.p2 && roomState.p2.uid === currentUser.uid) {
+        myRole = 'p2';
+        myName = roomState.p2.name;
+      } else {
+        myRole = null;
+      }
+
+      showScreen('screen-name');
+      renderSlots();
+      listenRoomUpdates();
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = 'Odaya bağlanırken bir sorun oluştu.';
+    }
+  };
+
+  // Firestore Gerçek Zamanlı Dinleyici Kurulumu
+  function listenRoomUpdates() {
+    if (isDbListenerActive && unsubscribeDb) {
+      unsubscribeDb();
+    }
+    const docRef = getRoomDocRef(roomCode);
+    unsubscribeDb = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        roomState = docSnap.data();
+        
+        // Rol koruma / Otomatik güncelleme
+        if (currentUser) {
+          if (roomState.p1 && roomState.p1.uid === currentUser.uid) {
+            myRole = 'p1';
+            myName = roomState.p1.name;
+          } else if (roomState.p2 && roomState.p2.uid === currentUser.uid) {
+            myRole = 'p2';
+            myName = roomState.p2.name;
+          }
+        }
+        
+        onRoomUpdated();
+      }
+    }, (error) => {
+      console.error("Yayın dinleme hatası:", error);
+    });
+    isDbListenerActive = true;
   }
-  await saveRoom();
-  document.getElementById('roomChipCode').textContent = roomCode;
-  document.getElementById('roomChipCode2').textContent = roomCode;
-  showScreen('screen-name');
-  renderSlots();
-  startPolling();
-}
 
-async function saveRoom(){
-  try{
-    await window.storage.set(storageKey(roomCode), JSON.stringify(roomState), true);
-  }catch(e){
-    console.error('Kaydetme hatası', e);
+  // Koltuk (Oyuncu Rolü) Seçme
+  window.claimSlot = async function(role) {
+    const errEl = document.getElementById('nameError');
+    errEl.textContent = '';
+    const name = document.getElementById('nameInput').value.trim();
+    if (!name) {
+      errEl.textContent = 'Önce adını yaz.';
+      return;
+    }
+
+    const docRef = getRoomDocRef(roomCode);
+    try {
+      const freshSnap = await getDoc(docRef);
+      if (freshSnap.exists()) {
+        const freshData = freshSnap.data();
+        // Koltuğun başka bir uid tarafından alınıp alınmadığını kontrol et
+        if (freshData[role].uid && freshData[role].uid !== currentUser.uid) {
+          errEl.textContent = 'Bu koltuk zaten ' + freshData[role].name + ' tarafından alınmış.';
+          renderSlots();
+          return;
+        }
+      }
+
+      // Güncelleme yaparken oyuncunun benzersiz uid'sini de kaydediyoruz
+      const updateData = {};
+      updateData[`${role}.name`] = name;
+      updateData[`${role}.uid`] = currentUser.uid;
+      
+      // Eğer oyuncu diğer koltuktaysa orayı boşalt
+      const otherRole = role === 'p1' ? 'p2' : 'p1';
+      if (roomState[otherRole] && roomState[otherRole].uid === currentUser.uid) {
+        updateData[`${otherRole}.name`] = '';
+        updateData[`${otherRole}.uid`] = null;
+        updateData[`${otherRole}.secret`] = null;
+      }
+
+      await updateDoc(docRef, updateData);
+
+      myRole = role;
+      myName = name;
+      routeAfterIdentity();
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = 'Koltuk seçilirken hata oluştu.';
+    }
+  };
+
+  function renderSlots() {
+    if (!roomState) return;
+    const p1n = roomState.p1?.name || '';
+    const p2n = roomState.p2?.name || '';
+    
+    document.getElementById('slotP1Name').textContent = p1n || 'boş';
+    document.getElementById('slotP2Name').textContent = p2n || 'boş';
+    
+    // Diğer oyuncunun aldığı koltukları pasifize et, benim aldıklarımı seçilebilir tut
+    const p1Uid = roomState.p1?.uid || null;
+    const p2Uid = roomState.p2?.uid || null;
+    
+    document.getElementById('slotP1').classList.toggle('taken', !!p1Uid && p1Uid !== currentUser.uid);
+    document.getElementById('slotP2').classList.toggle('taken', !!p2Uid && p2Uid !== currentUser.uid);
   }
-}
 
-async function refreshRoom(){
-  if(!roomCode) return;
-  try{
-    const res = await window.storage.get(storageKey(roomCode), true);
-    if(res) roomState = JSON.parse(res.value);
-  }catch(e){}
-  onRoomUpdated();
-}
-
-function renderSlots(){
-  const p1n = roomState.p1.name;
-  const p2n = roomState.p2.name;
-  document.getElementById('slotP1Name').textContent = p1n || 'boş';
-  document.getElementById('slotP2Name').textContent = p2n || 'boş';
-  document.getElementById('slotP1').classList.toggle('taken', !!p1n && myRole !== 'p1');
-  document.getElementById('slotP2').classList.toggle('taken', !!p2n && myRole !== 'p2');
-}
-
-async function claimSlot(role){
-  const errEl = document.getElementById('nameError');
-  errEl.textContent = '';
-  const name = document.getElementById('nameInput').value.trim();
-  if(!name){
-    errEl.textContent = 'Önce adını yaz.';
-    return;
+  function routeAfterIdentity() {
+    if (!myRole) {
+      showScreen('screen-name');
+      return;
+    }
+    if (!roomState[myRole].secret) {
+      showScreen('screen-secret');
+    } else {
+      checkGameReady();
+    }
   }
-  await refreshRoom();
-  if(roomState[role].name && roomState[role].name !== name){
-    errEl.textContent = 'Bu koltuk zaten ' + roomState[role].name + ' tarafından alınmış.';
-    renderSlots();
-    return;
+
+  // Gizli Sayıyı Kilitleme
+  window.submitSecret = async function() {
+    if (!myRole) return;
+    const val = document.getElementById('secretInput').value.trim();
+    const errEl = document.getElementById('secretError');
+    errEl.textContent = '';
+    if (!/^\d{4}$/.test(val)) {
+      errEl.textContent = 'Tam olarak 4 rakam gir (0-9).';
+      return;
+    }
+
+    const docRef = getRoomDocRef(roomCode);
+    try {
+      const updateData = {};
+      updateData[`${myRole}.secret`] = val;
+      await updateDoc(docRef, updateData);
+      checkGameReady();
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = 'Sayı kilitlenirken hata oluştu.';
+    }
+  };
+
+  function opponentRole() { 
+    return myRole === 'p1' ? 'p2' : 'p1'; 
   }
-  roomState[role].name = name;
-  myRole = role;
-  myName = name;
-  await saveRoom();
-  routeAfterIdentity();
-}
 
-function routeAfterIdentity(){
-  if(!roomState[myRole].secret){
-    showScreen('screen-secret');
-  }else{
-    checkGameReady();
+  function checkGameReady() {
+    if (!myRole) return;
+    const opp = opponentRole();
+    if (roomState[opp] && roomState[opp].secret) {
+      showScreen('screen-game');
+      renderGame();
+    } else {
+      const oppName = (roomState[opp] && roomState[opp].name) ? roomState[opp].name : 'Rakibin';
+      document.getElementById('waitText').textContent = oppName + ' henüz sayısını kilitlemedi...';
+      showScreen('screen-wait');
+    }
   }
-}
 
-async function submitSecret(){
-  const val = document.getElementById('secretInput').value.trim();
-  const errEl = document.getElementById('secretError');
-  errEl.textContent = '';
-  if(!/^\d{4}$/.test(val)){
-    errEl.textContent = 'Tam olarak 4 rakam gir (0-9).';
-    return;
+  // Veritabanı Güncelleme Tetiklendiğinde Çağrılan Metot
+  function onRoomUpdated() {
+    const activeScreen = document.querySelector('.screen.active');
+    if (!activeScreen) return;
+    const id = activeScreen.id;
+    
+    if (id === 'screen-name') {
+      renderSlots();
+      // Eğer kullanıcı rolünü seçtiyse ve veritabanı güncellendiyse bir sonraki aşamaya geçir
+      if (myRole) {
+        routeAfterIdentity();
+      }
+    } else if (id === 'screen-wait' || id === 'screen-secret') {
+      checkGameReady();
+    } else if (id === 'screen-game') {
+      renderGame();
+    }
   }
-  await refreshRoom();
-  roomState[myRole].secret = val;
-  await saveRoom();
-  checkGameReady();
-}
 
-function opponentRole(){ return myRole === 'p1' ? 'p2' : 'p1'; }
-
-function checkGameReady(){
-  const opp = opponentRole();
-  if(roomState[opp].secret){
-    showScreen('screen-game');
-    renderGame();
-  }else{
-    const oppName = roomState[opp].name || 'Rakibin';
-    document.getElementById('waitText').textContent = oppName + ' henüz sayısını kilitlemedi...';
-    showScreen('screen-wait');
+  // Algoritmalar: Kaç rakam var ve Kaç rakam yerinde?
+  function countVar(secret, guess) {
+    const secretArr = secret.split('');
+    const used = new Array(4).fill(false);
+    let count = 0;
+    for (const g of guess.split('')) {
+      const idx = secretArr.findIndex((s, i) => s === g && !used[i]);
+      if (idx !== -1) { 
+        used[idx] = true; 
+        count++; 
+      }
+    }
+    return count;
   }
-}
 
-function onRoomUpdated(){
-  const activeScreen = document.querySelector('.screen.active');
-  if(!activeScreen) return;
-  const id = activeScreen.id;
-  if(id === 'screen-name'){
-    renderSlots();
-  }else if(id === 'screen-wait'){
-    checkGameReady();
-  }else if(id === 'screen-game'){
-    renderGame();
+  function countPos(secret, guess) {
+    let count = 0;
+    for (let i = 0; i < 4; i++) {
+      if (secret[i] === guess[i]) count++;
+    }
+    return count;
   }
-}
 
-function countVar(secret, guess){
-  const secretArr = secret.split('');
-  const used = new Array(4).fill(false);
-  let count = 0;
-  for(const g of guess.split('')){
-    const idx = secretArr.findIndex((s,i) => s === g && !used[i]);
-    if(idx !== -1){ used[idx] = true; count++; }
-  }
-  return count;
-}
+  // Tahmin Gönderme
+  window.submitGuess = async function() {
+    if (!myRole) return;
+    const errEl = document.getElementById('guessError');
+    errEl.textContent = '';
+    const val = document.getElementById('guessInput').value.trim();
+    if (!/^\d{4}$/.test(val)) {
+      errEl.textContent = 'Tam olarak 4 rakam gir (0-9).';
+      return;
+    }
 
-function countPos(secret, guess){
-  let count = 0;
-  for(let i=0;i<4;i++) if(secret[i] === guess[i]) count++;
-  return count;
-}
+    if (roomState.winner) {
+      renderGame();
+      return;
+    }
 
-async function submitGuess(){
-  const errEl = document.getElementById('guessError');
-  errEl.textContent = '';
-  const val = document.getElementById('guessInput').value.trim();
-  if(!/^\d{4}$/.test(val)){
-    errEl.textContent = 'Tam olarak 4 rakam gir (0-9).';
-    return;
-  }
-  await refreshRoom();
-  if(roomState.winner){
-    renderGame();
-    return;
-  }
-  const opp = opponentRole();
-  const oppSecret = roomState[opp].secret;
-  if(!oppSecret){
-    errEl.textContent = 'Rakibin henüz sayısını kilitlemedi.';
-    return;
-  }
-  const mode = roomState.foundAll[myRole] ? 'pos' : 'var';
-  let c, entry;
-  if(mode === 'var'){
-    c = countVar(oppSecret, val);
-    entry = { guess: val, count: c, mode: 'var' };
-    if(c === 4) roomState.foundAll[myRole] = true;
-  }else{
-    c = countPos(oppSecret, val);
-    entry = { guess: val, count: c, mode: 'pos' };
-    if(c === 4) roomState.winner = myRole;
-  }
-  roomState.history[myRole].push(entry);
-  await saveRoom();
-  document.getElementById('guessInput').value = '';
-  renderGame();
-}
+    const opp = opponentRole();
+    const oppSecret = roomState[opp]?.secret;
+    if (!oppSecret) {
+      errEl.textContent = 'Rakibin henüz sayısını kilitlemedi.';
+      return;
+    }
 
-function renderGame(){
-  const opp = opponentRole();
-  const meName = roomState[myRole].name || 'Sen';
-  const oppName = roomState[opp].name || 'Rakip';
-
-  const pillMe = document.getElementById(myRole === 'p1' ? 'pillP1' : 'pillP2');
-  const pillOpp = document.getElementById(opp === 'p1' ? 'pillP1' : 'pillP2');
-  pillMe.className = 'player-pill me';
-  pillMe.querySelector('span:last-child').textContent = meName + ' (sen)';
-  pillMe.querySelector('.dot').classList.toggle('ready', !!roomState[myRole].secret);
-  pillOpp.className = 'player-pill';
-  pillOpp.querySelector('span:last-child').textContent = oppName;
-  pillOpp.querySelector('.dot').classList.toggle('ready', !!roomState[opp].secret);
-
-  const winnerBox = document.getElementById('winnerBox');
-  const activeArea = document.getElementById('activeGameArea');
-  if(roomState.winner){
-    activeArea.style.display = 'none';
-    const iWon = roomState.winner === myRole;
-    winnerBox.innerHTML = '<div class="win-banner"><h2>' + (iWon ? 'Kilidi kırdın!' : (oppName + ' kilidi kırdı!')) + '</h2><p>' + (iWon ? (oppName + ' sayısı: ' + roomState[opp].secret) : ('Senin sayın: ' + roomState[myRole].secret)) + '</p></div>';
-  }else{
-    winnerBox.innerHTML = '';
-    activeArea.style.display = 'block';
     const mode = roomState.foundAll[myRole] ? 'pos' : 'var';
-    const banner = document.getElementById('modeBanner');
-    if(mode === 'var'){
-      banner.innerHTML = '<b>Aşama 1 — sayı avı.</b> Tahmininde ' + oppName + ' sayısında geçen kaç rakam olduğunu göreceksin, yerleri önemli değil.';
-    }else{
-      banner.innerHTML = '<b>Aşama 2 — konum avı.</b> Doğru rakamları buldun, artık sadece doğru sırada olanlar sayılır. 4/4 olunca kilidi kırarsın.';
+    let c, entry;
+    const updatedFoundAll = { ...roomState.foundAll };
+    let updatedWinner = roomState.winner || null;
+
+    if (mode === 'var') {
+      c = countVar(oppSecret, val);
+      entry = { guess: val, count: c, mode: 'var' };
+      if (c === 4) {
+        updatedFoundAll[myRole] = true;
+      }
+    } else {
+      c = countPos(oppSecret, val);
+      entry = { guess: val, count: c, mode: 'pos' };
+      if (c === 4) {
+        updatedWinner = myRole;
+      }
     }
-    if(!roomState[opp].secret){
-      document.getElementById('guessBtn').disabled = true;
-    }else{
-      document.getElementById('guessBtn').disabled = false;
+
+    // Geçmiş veritabanına eklenir
+    const currentHistory = roomState.history ? { ...roomState.history } : { p1: [], p2: [] };
+    if (!currentHistory[myRole]) currentHistory[myRole] = [];
+    currentHistory[myRole].push(entry);
+
+    const docRef = getRoomDocRef(roomCode);
+    try {
+      await updateDoc(docRef, {
+        history: currentHistory,
+        foundAll: updatedFoundAll,
+        winner: updatedWinner
+      });
+      document.getElementById('guessInput').value = '';
+    } catch (e) {
+      console.error(e);
+      errEl.textContent = 'Tahmin gönderilemedi.';
+    }
+  };
+
+  // Oyun Ekranını Oluşturma
+  function renderGame() {
+    if (!roomState || !myRole) return;
+    const opp = opponentRole();
+    const meName = roomState[myRole]?.name || 'Sen';
+    const oppName = roomState[opp]?.name || 'Rakip';
+
+    const pillMe = document.getElementById(myRole === 'p1' ? 'pillP1' : 'pillP2');
+    const pillOpp = document.getElementById(opp === 'p1' ? 'pillP1' : 'pillP2');
+    
+    if (pillMe && pillOpp) {
+      pillMe.className = 'player-pill me';
+      pillMe.querySelector('span:last-child').textContent = meName + ' (sen)';
+      pillMe.querySelector('.dot').classList.toggle('ready', !!roomState[myRole]?.secret);
+      
+      pillOpp.className = 'player-pill';
+      pillOpp.querySelector('span:last-child').textContent = oppName;
+      pillOpp.querySelector('.dot').classList.toggle('ready', !!roomState[opp]?.secret);
+    }
+
+    const winnerBox = document.getElementById('winnerBox');
+    const activeArea = document.getElementById('activeGameArea');
+    
+    if (roomState.winner) {
+      activeArea.style.display = 'none';
+      const iWon = roomState.winner === myRole;
+      winnerBox.innerHTML = `
+        <div class="win-banner">
+          <h2>${iWon ? 'Kilidi kırdın!' : (oppName + ' kilidi kırdı!')}</h2>
+          <p>${iWon ? (oppName + ' sayısı: ' + roomState[opp]?.secret) : ('Senin sayın: ' + roomState[myRole]?.secret)}</p>
+        </div>
+      `;
+    } else {
+      winnerBox.innerHTML = '';
+      activeArea.style.display = 'block';
+      const mode = roomState.foundAll[myRole] ? 'pos' : 'var';
+      const banner = document.getElementById('modeBanner');
+      if (mode === 'var') {
+        banner.innerHTML = `<b>Aşama 1 — sayı avı.</b> Tahmininde ${oppName} sayısında geçen kaç rakam olduğunu göreceksin, yerleri önemli değil.`;
+      } else {
+        banner.innerHTML = `<b>Aşama 2 — konum avı.</b> Doğru rakamları buldun, artık sadece doğru sırada olanlar sayılır. 4/4 olunca kilidi kırarsın.`;
+      }
+      
+      const guessBtn = document.getElementById('guessBtn');
+      if (!roomState[opp]?.secret) {
+        guessBtn.disabled = true;
+      } else {
+        guessBtn.disabled = false;
+      }
+    }
+
+    const hist = roomState.history?.[myRole] || [];
+    const body = document.getElementById('historyBody');
+    const empty = document.getElementById('emptyHistory');
+    const table = document.getElementById('historyTable');
+    
+    if (hist.length === 0) {
+      table.style.display = 'none';
+      empty.style.display = 'block';
+    } else {
+      table.style.display = 'table';
+      empty.style.display = 'none';
+      body.innerHTML = hist.slice().reverse().map(h => {
+        const label = h.mode === 'var' ? (h.count + ' / 4 sayı var') : (h.count + ' / 4 doğru yerde');
+        return `<tr><td>${h.guess}</td><td class="count">${label}</td></tr>`;
+      }).join('');
     }
   }
 
-  const hist = roomState.history[myRole] || [];
-  const body = document.getElementById('historyBody');
-  const empty = document.getElementById('emptyHistory');
-  const table = document.getElementById('historyTable');
-  if(hist.length === 0){
-    table.style.display = 'none';
-    empty.style.display = 'block';
-  }else{
-    table.style.display = 'table';
-    empty.style.display = 'none';
-    body.innerHTML = hist.slice().reverse().map(h => {
-      const label = h.mode === 'var' ? (h.count + ' / 4 sayı var') : (h.count + ' / 4 doğru yerde');
-      return '<tr><td>' + h.guess + '</td><td class="count">' + label + '</td></tr>';
-    }).join('');
-  }
-}
+  // Yeni Tur / Oyunu Sıfırlama
+  window.newRound = async function() {
+    const docRef = getRoomDocRef(roomCode);
+    try {
+      await updateDoc(docRef, {
+        "p1.secret": null,
+        "p2.secret": null,
+        history: { p1: [], p2: [] },
+        foundAll: { p1: false, p2: false },
+        winner: null
+      });
+      document.getElementById('secretInput').value = '';
+      routeAfterIdentity();
+    } catch (e) {
+      console.error(e);
+      showToast("Yeni oyun başlatılamadı.");
+    }
+  };
 
-async function newRound(){
-  await refreshRoom();
-  roomState.p1.secret = null;
-  roomState.p2.secret = null;
-  roomState.history = { p1: [], p2: [] };
-  roomState.foundAll = { p1: false, p2: false };
-  roomState.winner = null;
-  await saveRoom();
-  document.getElementById('secretInput').value = '';
-  routeAfterIdentity();
-}
+  // Input Sınırlamaları ve Klavye Olayları
+  document.getElementById('roomInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+  document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+  document.getElementById('secretInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitSecret(); });
+  document.getElementById('secretInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
+  document.getElementById('guessInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
+  document.getElementById('guessInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
 
-function copyRoomCode(){
-  if(navigator.clipboard && roomCode){
-    navigator.clipboard.writeText(roomCode);
-  }
-}
-
-function startPolling(){
-  if(pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(refreshRoom, 2200);
-}
-
-document.getElementById('roomInput').addEventListener('keydown', e => { if(e.key === 'Enter') joinRoom(); });
-document.getElementById('nameInput').addEventListener('keydown', e => { if(e.key === 'Enter') e.preventDefault(); });
-document.getElementById('secretInput').addEventListener('keydown', e => { if(e.key === 'Enter') submitSecret(); });
-document.getElementById('secretInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
-document.getElementById('guessInput').addEventListener('keydown', e => { if(e.key === 'Enter') submitGuess(); });
-document.getElementById('guessInput').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
+  // Başlangıç Noktası
+  initFirebase();
 </script>
 </body>
 </html>
